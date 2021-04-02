@@ -46,21 +46,71 @@ class Card {
 
 (() => { // IIFE to avoid globals
 
+
+
   /*  Load Content
+   *    TODO
+   *      Add stars type of search.
    *  ============
    */
 
-  const outputContainer = document.getElementById('themes_container')
+  // when local storage is not populated set the as the latest order
+  if (!localStorage['sort']) localStorage['sort'] = 'latest'
 
-  if (outputContainer) {
+  function repeatToggle (nextType) {
+
+    localStorage['sort'] = nextType
+    return toggleSortType(false)
+
+  }
+
+  function toggleSortType (change) {
+
+    // Verify if there are cards and remove them
+    if (document.querySelectorAll('.card'))
+      document.querySelectorAll('.card').forEach(e => e.remove());
+
+
+    // Add all themes
     fetch('themes.json')
     .then(data => data.json())
     .then(parsedData => {
 
-      // sort from the most recent theme added
-      // temporary since we're going to add a button to sort
-      // in different ways
-      parsedData.reverse()
+
+      switch (localStorage['sort']) {
+ 
+        // sort from the most oldest theme added
+        case 'latest':
+
+          parsedData.reverse()
+
+          if (change) return repeatToggle('randomness')
+          break
+      
+
+        // sort with randomness
+        case 'randomness':
+
+          for (let i = parsedData.length - 1; i > 0; i--) {
+
+            const j = Math.floor(Math.random() * (i + 1));
+            [parsedData[i], parsedData[j]] = [parsedData[j], parsedData[i]]
+
+          }
+
+          4if (change) return repeatToggle('oldest')
+          break
+
+
+        // sort from the most recent theme added
+        default:
+          if (change) repeatToggle('latest')
+
+      }
+
+
+      document.getElementById('js-text-sort').textContent = localStorage['sort']
+
 
       parsedData.forEach((entry, index)  => {
 
@@ -69,8 +119,30 @@ class Card {
         card.render(outputContainer)
 
       })
+
     })
+
   }
+
+  const outputContainer = document.getElementById('themes_container')
+
+  if (outputContainer) {
+    
+    toggleSortType(false)
+
+  }
+
+  /*  Sort Handling
+   *  ==============
+   *
+   *  Random
+   *  First to last
+   *  Last to first
+   */
+
+  const sortTrigger = document.getElementById('js-sortSwitcher')
+
+  sortTrigger.addEventListener('click', event => toggleSortType(true))
 
 
   /*  Theme Handling
